@@ -1,0 +1,36 @@
+# 🚀 BEEChat Render Deployment Configuration
+services:
+  # Backend API
+  - type: web
+    name: beechat-api
+    runtime: node
+    region: ohio
+    plan: free
+    branch: master
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npx tsx index.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: PORT
+        value: 10000
+
+  # Frontend (static site)
+  - type: static
+    name: beechat-app
+    runtime: static
+    region: ohio
+    plan: free
+    branch: master
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

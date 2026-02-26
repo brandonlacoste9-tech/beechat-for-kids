@@ -1,89 +1,188 @@
 # 🐝 BEEChat for Kids
 
-**Safe messaging app for kids with parental controls** - Une application de messagerie avec la culture québécoise intégrée!
+**Safe messaging app for kids with parental controls**
 
-## Fonctionnalités
+[![Deploy on Render](https://img.shields.io/badge/Deploy-Render-green)](https://render.com)
+[![Database](https://img.shields.io/badge/Database-Supabase-blue)](https://supabase.com)
 
-- 💬 **Messagerie en temps réel** - Propulsée par Socket.io
-- 🦫 **Robot TI-GUY** - Mascotte castor qui répond aléatoirement
-- 🎙️ **Messages vocaux** - Enregistre et envoie de l'audio
-- 📹 **Appels vidéo** - WebRTC prêt
-- 👥 **Discussions de groupe** - Crée des "crew" ou des "gangs"
-- 💰 **Paiements** - Intégration Interac (bientôt)
-- 🎨 **Thèmes québécois** - Vert forêt, or, et castor
+## Features
 
-## Stack Technique
+- 🔒 **Parent-approved contacts** - Kids can only chat with parent-approved friends
+- 👁️ **Message monitoring** - Parents can view their child's messages
+- 📍 **GPS tracking** - Real-time location with geofencing alerts
+- 🛡️ **Content filtering** - Automatic detection of inappropriate language
+- 🐝 **BEE mascot** - Friendly safety companion for kids
+- 🎨 **Luxury leather theme** - Premium UI with tans, beige, ostrich textures
 
-- **Frontend**: React + Vite + Tailwind CSS
-- **Backend**: Node.js + Express + Socket.io
-- **Base de données**: Supabase (PostgreSQL)
-- **Temps réel**: Socket.io
+## Tech Stack
 
-## Démarrage
+| Layer | Technology |
+|-------|------------|
+| Frontend | React + Vite + Tailwind CSS |
+| Backend | Node.js + Express + Socket.io |
+| Database | Supabase PostgreSQL |
+| Real-time | WebSockets |
+| Hosting | Render |
 
-### 1. Installer les dépendances
+## Quick Start
+
+### 1. Clone & Install
 
 ```bash
-# Installer les dépendances racine
-npm install
+git clone https://github.com/brandonlacoste9-tech/beechat-for-kids.git
+cd beechat-for-kids
 
-# Installer le backend
-cd backend
+# Install dependencies
 npm install
-
-# Installer le frontend
-cd ../frontend
-npm install
+cd backend && npm install
+cd ../frontend && npm install
 ```
 
-### 2. Démarrer les serveurs
+### 2. Set up Supabase Database
+
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Go to SQL Editor → New query
+4. Copy/paste `supabase-schema.sql` and run it
+5. Go to Settings → API → Copy:
+   - `Project URL` → `SUPABASE_URL`
+   - `service_role secret` → `SUPABASE_SERVICE_KEY`
+
+### 3. Environment Variables
 
 ```bash
-# Depuis le répertoire racine
+cp .env.example .env
+# Edit .env with your Supabase credentials
+```
+
+### 4. Run Locally
+
+```bash
+# Terminal 1: Backend
+cd backend
+npx tsx index.ts
+
+# Terminal 2: Frontend
+cd frontend
 npm run dev
 ```
 
-Ça démarre:
-- Backend: http://localhost:3001
-- Frontend: http://localhost:5173
+Visit `http://localhost:5173`
 
-### 3. Ouvrir l'application
+## Deploy to Render
 
-Va sur http://localhost:5173 et commence à chatter!
+### Option 1: Blueprint (Recommended)
 
-## Commandes TI-GUY
+1. Push your code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com)
+3. Click "New" → "Blueprint"
+4. Connect your GitHub repo
+5. Add environment variables in Render dashboard:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY`
+6. Deploy!
 
-TI-GUY répond aléatoirement avec du joual québécois:
-- "Salut mon chum! 🦫"
-- "Osti que c'est beau ça!"
-- "Tabarnouche, raconte-moi plus!"
+### Option 2: Manual
 
-Tape `/nobot` pour désactiver les réponses de TI-GUY.
+**Backend:**
+- New → Web Service
+- Connect repo, select `backend` folder
+- Build: `npm install`
+- Start: `npx tsx index.ts`
+- Add env vars
 
-## Fonctionnalités Québécoises
+**Frontend:**
+- New → Static Site
+- Connect repo, select `frontend` folder
+- Build: `npm install && npm run build`
+- Publish: `dist`
 
-- 🍁 **Langue**: Français + Joual (argot québécois)
-- 🏒 **Thèmes**: Hockey, poutine, sirop d'érable
-- ⚜️ **Couleurs**: Vert forêt, or, rouge canadien
-- 🦫 **Mascotte**: TI-GUY le castor
+## Database Schema
 
-## Feuille de Route
+```sql
+users (id, username, email, type, parent_id, age, status)
+messages (id, sender_id, recipient_id, content, type, safety_flags)
+locations (id, user_id, lat, lng, accuracy)
+safety_logs (id, child_id, content, flags, severity)
+contacts (id, child_id, contact_name, approved, approved_by)
+geofence_zones (id, child_id, name, lat, lng, radius, type)
+geofence_alerts (id, child_id, zone_id, alert_type)
+```
 
-- [ ] Messages vocaux
-- [ ] Appels vidéo (WebRTC)
-- [ ] Partage de fichiers
-- [ ] Discussions de groupe
-- [ ] Interac e-Transfer
-- [ ] Autocollants québécois
-- [ ] Fil d'actualité (Moments)
-- [ ] Application mobile (React Native)
+## Safety Features
 
-## Fait avec ❤️ au Québec
+### Content Filtering
+- Automatic detection of swear words (English + French)
+- Phone number/email detection
+- 3-tier system: Allow / Warn / Block
+- Parent notifications for violations
 
-Fait avec fierté québécoise! 🍁🐝 ⚜️
+### Contact Approval
+- Child requests to add friend
+- Parent approves/denies from dashboard
+- Child can only message approved contacts
 
----
+### Location Tracking
+- Real-time GPS updates
+- 24-hour location history
+- Geofencing with enter/exit alerts
+- Home/School zone support
 
-**Développé par:** L'équipe OuiChat 🦫
-**Version:** 1.0.0
-**Licence:** MIT
+## API Endpoints
+
+```
+GET  /api/health                           # Health check
+GET  /api/parent/:id/children              # List children
+GET  /api/parent/:id/child/:id/messages    # View messages
+GET  /api/parent/:id/child/:id/contacts    # List contacts
+POST /api/parent/:id/child/:id/geofences   # Add geofence
+GET  /api/parent/:id/child/:id/geofence-alerts  # Get alerts
+```
+
+## WebSocket Events
+
+### From Client:
+- `parent:register` - Create parent account
+- `child:register` - Create child account
+- `message:send` - Send message
+- `location:update` - Update GPS location
+- `child:addContact` - Request new contact
+- `parent:approveContact` - Approve contact
+
+### From Server:
+- `message:received` - New message
+- `message:blocked` - Content blocked
+- `parent:locationData` - Location update
+- `parent:safetyLogs` - Safety alerts
+- `parent:geofenceAlert` - Geofence breach
+
+## Development
+
+```bash
+# Run tests
+cd backend && npm test
+
+# Build for production
+cd frontend && npm run build
+
+# Deploy
+git add .
+git commit -m "Your changes"
+git push origin master
+```
+
+## Security
+
+- All messages stored in PostgreSQL with RLS
+- Parents can only access their children's data
+- Location data encrypted at rest
+- Socket authentication required
+- No passwords stored for children (parent-code login)
+
+## License
+
+MIT - Made with ❤️ for safe family communication
+
+## Support
+
+For issues or feature requests, please open a GitHub issue.

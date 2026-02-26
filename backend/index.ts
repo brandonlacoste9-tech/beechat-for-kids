@@ -1,7 +1,7 @@
 /**
  * 🐝 BEEChat Backend
- * Messagerie sécurisée pour ados du Québec
- * Parent-approved messaging with safety monitoring
+ * Safe messaging for kids with parental monitoring
+ * PostgreSQL + Supabase
  */
 
 import express from "express";
@@ -11,21 +11,8 @@ import cors from "cors";
 import { config } from "dotenv";
 import { v4 as uuidv4 } from "uuid";
 import { 
-  checkMessage, 
-  logSafetyEvent, 
-  updateLocation, 
-  getChildLocation,
-  getLocationHistory,
-  safetyLogs,
-  locationHistory
+  checkMessage
 } from "./src/safety";
-import {
-  storeMessageForParent,
-  getChildMessages,
-  getConversationSummary,
-  initializeParentSettings,
-  parentSettings
-} from "./src/parental-monitoring";
 import {
   checkGeofences,
   addGeofenceZone,
@@ -34,6 +21,25 @@ import {
   geofenceZones,
   initializeDefaultZones
 } from "./src/geofence";
+import {
+  supabase,
+  createUser,
+  getUserById,
+  getChildrenByParent,
+  storeMessage,
+  getMessagesForParent,
+  storeLocation,
+  getLatestLocation,
+  getLocationHistory,
+  logSafetyEvent,
+  getSafetyLogs,
+  addContact,
+  approveContact,
+  getApprovedContacts,
+  isContactApproved,
+  checkDatabaseHealth,
+  User
+} from "./src/db";
 
 config();
 
@@ -49,289 +55,354 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
-// Stockage en mémoire
-const users = new Map();
-const messages = new Map();
-const parentAccounts = new Map();
-const childAccounts = new Map();
+// In-memory caches for socket mapping (not persistent data)
+const socketToUser = new Map<string, string>(); // socketId -> userId
+const onlineUsers = new Map<string, boolean>();
 
-// Réponses de TI-GUY (safety mascot)
-const TI_GUY_SAFE_RESPONSES = [
-  "Salut! 🦫 Reste positif mon ami!",
-  "Oups! On utilise des mots gentils ici 😊",
-  "TI-GUY surveille pour ta sécurité!",
-  "C'est un beau jour pour chatter! 🍁",
-  "Tes parents peuvent voir tes messages, sois gentil!",
-  "On reste cool et respectueux! ⚜️",
+// BEE safety mascot responses
+const BEE_SAFE_RESPONSES = [
+  "Hey there! 🐝 Stay positive, friend!",
+  "Oops! We use kind words here 😊",
+  "BEE is watching out for your safety!",
+  "It's a great day to chat! 🍯",
+  "Your parents can see your messages, be nice!",
+  "Let's keep it cool and respectful! 🐝",
 ];
 
 io.on("connection", (socket) => {
-  console.log("👋 Nouvelle connexion:", socket.id);
+  console.log("👋 New connection:", socket.id);
 
-  // Enregistrement parent
-  socket.on("parent:register", (data) => {
-    const parent = {
-      id: socket.id,
-      type: 'parent',
+  // Parent registration
+  socket.on("parent:register", async (data) => {
+    const userId = uuidv4();
+    
+    const user = await createUser({
+      id: userId,
+      socket_id: socket.id,
       username: data.username,
       email: data.email,
-      children: [],
-    };
-    parentAccounts.set(socket.id, parent);
-    users.set(socket.id, parent);
-    
-    // Initialize parent settings with message viewing enabled
-    initializeParentSettings(socket.id);
-    console.log(`👨‍👩‍👧 Parent registered: ${data.username} (message viewing: ON, location: ON)`);
-  });
+      type: 'parent'
+    });
 
-  // Enregistrement enfant
-  socket.on("child:register", (data) => {
-    // Vérifier que le parent existe
-    const parent = parentAccounts.get(data.parentId);
-    if (!parent) {
-      socket.emit("error", { message: "Parent non trouvé" });
+    if (!user) {
+      socket.emit("error", { message: "Failed to create account" });
       return;
     }
 
-    const child = {
-      id: socket.id,
-      type: 'child',
-      username: data.username,
-      parentId: data.parentId,
-      age: data.age,
-      approvedContacts: [],
-      restrictions: {
-        timeLimit: data.restrictions?.timeLimit || 120, // minutes per day
-        allowedHours: data.restrictions?.allowedHours || { start: 7, end: 21 },
-        contentFilter: true,
-      }
-    };
+    socketToUser.set(socket.id, userId);
+    onlineUsers.set(userId, true);
     
-    childAccounts.set(socket.id, child);
-    users.set(socket.id, child);
-    parent.children.push(socket.id);
+    socket.emit("parent:registered", { 
+      id: userId, 
+      username: data.username 
+    });
+    
+    console.log(`👨‍👩‍👧 Parent registered: ${data.username} (${userId})`);
+  });
+
+  // Child registration
+  socket.on("child:register", async (data) => {
+    // Verify parent exists
+    const parent = await getUserById(data.parentId);
+    if (!parent || parent.type !== 'parent') {
+      socket.emit("error", { message: "Parent not found" });
+      return;
+    }
+
+    const userId = uuidv4();
+    
+    const user = await createUser({
+      id: userId,
+      socket_id: socket.id,
+      username: data.username,
+      type: 'child',
+      parent_id: data.parentId,
+      age: data.age
+    });
+
+    if (!user) {
+      socket.emit("error", { message: "Failed to create account" });
+      return;
+    }
+
+    socketToUser.set(socket.id, userId);
+    onlineUsers.set(userId, true);
     
     socket.emit("child:registered", { 
-      id: socket.id, 
-      username: child.username,
-      message: "Bienvenue sur OuiChat! TI-GUY veille sur toi 🦫"
+      id: userId, 
+      username: data.username,
+      message: "Welcome to BEEChat! BEE is watching over you 🐝"
     });
     
-    console.log(`👶 Enfant enregistré: ${data.username} (parent: ${parent.username})`);
+    console.log(`👶 Child registered: ${data.username} (parent: ${parent.username})`);
   });
 
-  // Envoyer message avec vérification sécurité
-  socket.on("message:send", (data) => {
-    const sender = users.get(socket.id);
-    if (!sender) return;
+  // Send message with safety check
+  socket.on("message:send", async (data) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
 
-    // Vérifier contenu
-    const safetyCheck = checkMessage(data.content);
-    
-    // Si bloqué (contenu grave)
-    if (safetyCheck.action === 'block') {
-      socket.emit("message:blocked", {
-        reason: "Contenu inapproprié détecté",
-        flags: safetyCheck.flags,
-        tiGuyMessage: "Oups! Ce message n'est pas approprié. Tes parents ont été informés."
-      });
-      
-      // Log pour parent
-      if (sender.type === 'child') {
-        logSafetyEvent({
-          id: uuidv4(),
-          childId: socket.id,
-          childUsername: sender.username,
-          content: data.content,
-          flags: safetyCheck.flags,
-          severity: safetyCheck.severity,
-          timestamp: new Date(),
-          chatWith: data.recipientId,
-        });
-      }
+    const sender = await getUserById(userId);
+    if (!sender || sender.type !== 'child') {
+      socket.emit("error", { message: "Only children can send messages" });
       return;
     }
 
-    // Si avertissement (contenu léger)
-    if (safetyCheck.action === 'warn') {
-      socket.emit("message:warning", {
-        message: "⚠️ Attention à ton langage",
-        tiGuyMessage: TI_GUY_SAFE_RESPONSES[Math.floor(Math.random() * TI_GUY_SAFE_RESPONSES.length)]
-      });
+    // Check if recipient is approved
+    const isApproved = await isContactApproved(userId, data.recipientId);
+    if (!isApproved) {
+      socket.emit("error", { message: "Contact not approved by parent" });
+      return;
     }
 
-    const message = {
-      id: uuidv4(),
-      content: data.content,
-      senderId: socket.id,
-      sender: sender,
-      recipientId: data.recipientId,
-      timestamp: new Date(),
-      type: data.type || "text",
-      safetyChecked: true,
-    };
-
-    // Sauvegarder et envoyer
-    messages.set(message.id, message);
-    io.to(data.recipientId).emit("message:received", message);
-    socket.emit("message:sent", message);
-
-    // Store for parent review
-    storeMessageForParent({
-      id: message.id,
-      childId: socket.id,
-      content: data.content,
-      sender: sender.username,
-      recipient: data.recipientId,
-      timestamp: new Date(),
-      type: 'sent',
-      safetyFlags: safetyCheck.flags
-    });
-
-    // Log si flags détectés
-    if (!safetyCheck.clean && sender.type === 'child') {
-      logSafetyEvent({
-        id: uuidv4(),
-        childId: socket.id,
-        childUsername: sender.username,
+    // Check content
+    const safetyCheck = checkMessage(data.content);
+    
+    // If blocked (severe content)
+    if (safetyCheck.action === 'block') {
+      socket.emit("message:blocked", {
+        reason: "Inappropriate content detected",
+        flags: safetyCheck.flags,
+        beeMessage: "Oops! This message isn't appropriate. Your parents have been notified."
+      });
+      
+      // Log for parent
+      await logSafetyEvent({
+        child_id: userId,
         content: data.content,
         flags: safetyCheck.flags,
         severity: safetyCheck.severity,
-        timestamp: new Date(),
-        chatWith: data.recipientId,
+        chat_with: data.recipientId
+      });
+      
+      return;
+    }
+
+    // Store message
+    const message = await storeMessage({
+      sender_id: userId,
+      recipient_id: data.recipientId,
+      content: data.content,
+      type: data.type || 'text',
+      safety_flags: safetyCheck.flags
+    });
+
+    if (message) {
+      // Send to recipient if online
+      io.to(data.recipientId).emit("message:received", {
+        ...message,
+        senderName: sender.username
+      });
+      
+      socket.emit("message:sent", message);
+    }
+
+    // If warning (mild content)
+    if (safetyCheck.action === 'warn') {
+      socket.emit("message:warning", {
+        message: "⚠️ Watch your language",
+        beeMessage: BEE_SAFE_RESPONSES[Math.floor(Math.random() * BEE_SAFE_RESPONSES.length)]
+      });
+    }
+
+    // Log if flags detected
+    if (!safetyCheck.clean) {
+      await logSafetyEvent({
+        child_id: userId,
+        content: data.content,
+        flags: safetyCheck.flags,
+        severity: safetyCheck.severity,
+        chat_with: data.recipientId
       });
     }
   });
 
-  // Mise à jour position GPS
-  socket.on("location:update", (data) => {
-    const user = users.get(socket.id);
+  // Update GPS location
+  socket.on("location:update", async (data) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+
+    const user = await getUserById(userId);
     if (!user || user.type !== 'child') return;
 
-    const locationUpdate = {
-      userId: socket.id,
+    // Store location
+    await storeLocation({
+      user_id: userId,
       lat: data.lat,
       lng: data.lng,
-      timestamp: new Date(),
-      accuracy: data.accuracy,
-    };
-
-    updateLocation(locationUpdate);
+      accuracy: data.accuracy
+    });
 
     // Check geofences
-    const geofenceAlerts = checkGeofences(socket.id, { lat: data.lat, lng: data.lng });
+    const alerts = checkGeofences(userId, { lat: data.lat, lng: data.lng });
     
     // Send alerts to parent if any
-    if (geofenceAlerts.length > 0 && user.parentId) {
-      const parentSocket = parentAccounts.get(user.parentId);
-      if (parentSocket) {
-        geofenceAlerts.forEach(alert => {
-          io.to(user.parentId).emit("parent:geofenceAlert", alert);
-        });
-      }
+    if (alerts.length > 0 && user.parent_id) {
+      alerts.forEach(alert => {
+        io.to(user.parent_id).emit("parent:geofenceAlert", alert);
+      });
     }
 
     console.log(`📍 ${user.username} location: ${data.lat}, ${data.lng}`);
   });
 
-  // Parent demande position enfant
-  socket.on("parent:getLocation", (childId) => {
-    const parent = parentAccounts.get(socket.id);
-    if (!parent || !parent.children.includes(childId)) {
-      socket.emit("error", { message: "Accès refusé" });
+  // Parent requests location
+  socket.on("parent:getLocation", async (childId) => {
+    const parentId = socketToUser.get(socket.id);
+    if (!parentId) return;
+
+    const child = await getUserById(childId);
+    if (!child || child.parent_id !== parentId) {
+      socket.emit("error", { message: "Access denied" });
       return;
     }
 
-    const location = getChildLocation(socket.id, childId);
-    const history = getLocationHistory(childId, 24);
+    const current = await getLatestLocation(childId);
+    const history = await getLocationHistory(childId, 24);
     
     socket.emit("parent:locationData", {
       childId,
-      current: location,
-      history: history.slice(-20), // Last 20 points
+      current,
+      history
     });
   });
 
-  // Parent demande logs sécurité
-  socket.on("parent:getSafetyLogs", (childId) => {
-    const parent = parentAccounts.get(socket.id);
-    if (!parent || !parent.children.includes(childId)) {
-      socket.emit("error", { message: "Accès refusé" });
+  // Parent requests safety logs
+  socket.on("parent:getSafetyLogs", async (childId) => {
+    const parentId = socketToUser.get(socket.id);
+    if (!parentId) return;
+
+    const child = await getUserById(childId);
+    if (!child || child.parent_id !== parentId) {
+      socket.emit("error", { message: "Access denied" });
       return;
     }
 
-    const logs = safetyLogs.get(socket.id) || [];
-    const childLogs = logs.filter(l => l.childId === childId);
+    const logs = await getSafetyLogs(childId);
     
     socket.emit("parent:safetyLogs", {
       childId,
-      logs: childLogs.slice(-50), // Last 50 events
+      logs
     });
   });
 
-  // Indicateur de frappe
+  // Add contact request
+  socket.on("child:addContact", async (data) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+
+    const user = await getUserById(userId);
+    if (!user || user.type !== 'child') return;
+
+    const contact = await addContact({
+      child_id: userId,
+      contact_name: data.contactName,
+      approved: false,
+      approved_by: ''
+    });
+
+    if (contact) {
+      // Notify parent
+      io.to(user.parent_id!).emit("parent:contactRequest", {
+        childId: userId,
+        childName: user.username,
+        contactName: data.contactName,
+        contactId: contact.id
+      });
+
+      socket.emit("contact:requestSent", { 
+        message: "Parent approval requested" 
+      });
+    }
+  });
+
+  // Parent approves contact
+  socket.on("parent:approveContact", async (data) => {
+    const parentId = socketToUser.get(socket.id);
+    if (!parentId) return;
+
+    const success = await approveContact(data.contactId, parentId);
+    if (success) {
+      socket.emit("contact:approved", { contactId: data.contactId });
+    }
+  });
+
+  // Typing indicators
   socket.on("typing:start", (recipientId) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+    
     socket.to(recipientId).emit("typing:start", {
-      userId: socket.id,
-      username: users.get(socket.id)?.username,
+      userId,
+      username: socket.id
     });
   });
 
   socket.on("typing:stop", (recipientId) => {
-    socket.to(recipientId).emit("typing:stop", { userId: socket.id });
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+    
+    socket.to(recipientId).emit("typing:stop", { userId });
   });
 
-  // Déconnexion
-  socket.on("disconnect", () => {
-    const user = users.get(socket.id);
-    if (user) {
-      user.status = "offline";
-      console.log(`👋 ${user.username} déconnecté`);
+  // Disconnect
+  socket.on("disconnect", async () => {
+    const userId = socketToUser.get(socket.id);
+    if (userId) {
+      onlineUsers.delete(userId);
+      socketToUser.delete(socket.id);
+      
+      // Update status in DB
+      await supabase.from('users').update({ status: 'offline' }).eq('id', userId);
+      
+      console.log(`👋 User disconnected: ${userId}`);
     }
   });
 });
 
 // API Endpoints
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const dbHealthy = await checkDatabaseHealth();
   res.json({ 
     status: "ok", 
-    utilisateurs: users.size,
-    enfants: childAccounts.size,
-    parents: parentAccounts.size,
-    messages: messages.size 
+    database: dbHealthy ? "connected" : "disconnected",
+    onlineUsers: onlineUsers.size
   });
 });
 
 // Get all children for a parent
-app.get("/api/parent/:parentId/children", (req, res) => {
-  const parent = parentAccounts.get(req.params.parentId);
-  if (!parent) {
-    return res.status(404).json({ error: "Parent non trouvé" });
-  }
+app.get("/api/parent/:parentId/children", async (req, res) => {
+  const children = await getChildrenByParent(req.params.parentId);
   
-  const children = parent.children.map((id: string) => ({
-    id,
-    ...childAccounts.get(id),
-    location: getChildLocation(parent.id, id),
-  }));
+  // Add location to each child
+  const childrenWithLocation = await Promise.all(
+    children.map(async (child) => {
+      const location = await getLatestLocation(child.id);
+      return {
+        ...child,
+        location
+      };
+    })
+  );
   
-  res.json(children);
+  res.json(childrenWithLocation);
 });
 
 // Get child's messages (parent viewing)
-app.get("/api/parent/:parentId/child/:childId/messages", (req, res) => {
+app.get("/api/parent/:parentId/child/:childId/messages", async (req, res) => {
   const { parentId, childId } = req.params;
-  const { limit, search } = req.query;
+  const { limit } = req.query;
   
-  const messages = getChildMessages(parentId, childId, {
-    limit: limit ? parseInt(limit as string) : 50,
-    searchQuery: search as string
-  });
-  
-  if (messages === null) {
-    return res.status(403).json({ error: "Access denied or viewing disabled" });
+  // Verify parent has access
+  const child = await getUserById(childId);
+  if (!child || child.parent_id !== parentId) {
+    return res.status(403).json({ error: "Access denied" });
   }
+  
+  const messages = await getMessagesForParent(
+    childId, 
+    limit ? parseInt(limit as string) : 50
+  );
   
   res.json({
     childId,
@@ -340,73 +411,28 @@ app.get("/api/parent/:parentId/child/:childId/messages", (req, res) => {
   });
 });
 
-// Get conversation summary (who child talks to most)
-app.get("/api/parent/:parentId/child/:childId/contacts", (req, res) => {
-  const { parentId, childId } = req.params;
-  
-  const summary = getConversationSummary(parentId, childId);
-  if (summary === null) {
-    return res.status(403).json({ error: "Access denied" });
-  }
-  
-  res.json({
-    childId,
-    contacts: summary
-  });
-});
-
-// Get parent settings
-app.get("/api/parent/:parentId/settings", (req, res) => {
-  const settings = parentSettings.get(req.params.parentId);
-  if (!settings) {
-    return res.status(404).json({ error: "Settings not found" });
-  }
-  
-  res.json(settings);
-});
-
-// Update parent settings (toggle message viewing)
-app.put("/api/parent/:parentId/settings", (req, res) => {
-  const { viewMessages, viewMetadataOnly, realTimeAlerts, locationTracking } = req.body;
-  
-  const current = parentSettings.get(req.params.parentId);
-  if (!current) {
-    return res.status(404).json({ error: "Settings not found" });
-  }
-  
-  parentSettings.set(req.params.parentId, {
-    ...current,
-    viewMessages: viewMessages ?? current.viewMessages,
-    viewMetadataOnly: viewMetadataOnly ?? current.viewMetadataOnly,
-    realTimeAlerts: realTimeAlerts ?? current.realTimeAlerts,
-    locationTracking: locationTracking ?? current.locationTracking
-  });
-  
-  res.json({ success: true, settings: parentSettings.get(req.params.parentId) });
-});
-
-// Get geofence zones for a child
-app.get("/api/parent/:parentId/child/:childId/geofences", (req, res) => {
+// Get conversation summary
+app.get("/api/parent/:parentId/child/:childId/contacts", async (req, res) => {
   const { parentId, childId } = req.params;
   
   // Verify parent has access
-  const parent = parentAccounts.get(parentId);
-  if (!parent || !parent.children.includes(childId)) {
+  const child = await getUserById(childId);
+  if (!child || child.parent_id !== parentId) {
     return res.status(403).json({ error: "Access denied" });
   }
   
-  const zones = geofenceZones.get(childId) || [];
-  res.json({ childId, zones });
+  const contacts = await getApprovedContacts(childId);
+  res.json({ childId, contacts });
 });
 
 // Add geofence zone
-app.post("/api/parent/:parentId/child/:childId/geofences", (req, res) => {
+app.post("/api/parent/:parentId/child/:childId/geofences", async (req, res) => {
   const { parentId, childId } = req.params;
   const { name, lat, lng, radius, type } = req.body;
   
   // Verify parent has access
-  const parent = parentAccounts.get(parentId);
-  if (!parent || !parent.children.includes(childId)) {
+  const child = await getUserById(childId);
+  if (!child || child.parent_id !== parentId) {
     return res.status(403).json({ error: "Access denied" });
   }
   
@@ -414,31 +440,13 @@ app.post("/api/parent/:parentId/child/:childId/geofences", (req, res) => {
   res.json({ success: true, zone });
 });
 
-// Remove geofence zone
-app.delete("/api/parent/:parentId/child/:childId/geofences/:zoneId", (req, res) => {
-  const { parentId, childId, zoneId } = req.params;
-  
-  // Verify parent has access
-  const parent = parentAccounts.get(parentId);
-  if (!parent || !parent.children.includes(childId)) {
-    return res.status(403).json({ error: "Access denied" });
-  }
-  
-  const success = removeGeofenceZone(childId, zoneId);
-  if (success) {
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: "Zone not found" });
-  }
-});
-
 // Get geofence alerts
-app.get("/api/parent/:parentId/child/:childId/geofence-alerts", (req, res) => {
+app.get("/api/parent/:parentId/child/:childId/geofence-alerts", async (req, res) => {
   const { parentId, childId } = req.params;
   
   // Verify parent has access
-  const parent = parentAccounts.get(parentId);
-  if (!parent || !parent.children.includes(childId)) {
+  const child = await getUserById(childId);
+  if (!child || child.parent_id !== parentId) {
     return res.status(403).json({ error: "Access denied" });
   }
   
@@ -448,6 +456,7 @@ app.get("/api/parent/:parentId/child/:childId/geofence-alerts", (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
-  console.log(`🦫 Serveur OuiChat démarré sur le port ${PORT}`);
-  console.log(`🔒 Mode sécurisé: parent-approved messaging pour ados activé`);
+  console.log(`🐝 BEEChat server running on port ${PORT}`);
+  console.log(`🔒 Safe messaging for kids with parental controls`);
+  console.log(`💾 Connected to Supabase PostgreSQL`);
 });
