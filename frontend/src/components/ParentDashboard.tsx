@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 import { MessageViewer } from './MessageViewer';
+import { LocationTracker } from './LocationTracker';
 
 interface Child {
   id: string;
@@ -37,6 +38,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
   const [locationHistory, setLocationHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'location' | 'messages'>('overview');
   const [selectedChildForMessages, setSelectedChildForMessages] = useState<string | null>(null);
+  const [selectedChildForLocation, setSelectedChildForLocation] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch children on mount
@@ -98,6 +100,14 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
               }`}
             >
               💬 View Messages
+            </button>
+            <button
+              onClick={() => setActiveTab('location')}
+              className={`px-4 py-2 rounded-lg transition ${
+                activeTab === 'location' ? 'bg-purple-600' : 'hover:bg-green-700'
+              }`}
+            >
+              📍 Location
             </button>
             <button
               onClick={() => setActiveTab('safety')}
@@ -227,6 +237,71 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                         className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
                       >
                         💬 View Messages
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Location Tab */}
+        {activeTab === 'location' && (
+          <div className="grid gap-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              📍 Location Tracker
+            </h2>
+            
+            {selectedChildForLocation ? (
+              <>
+                <button
+                  onClick={() => setSelectedChildForLocation(null)}
+                  className="text-blue-600 hover:underline text-left"
+                >
+                  ← Back to children
+                </button>
+                <LocationTracker
+                  socket={socket}
+                  parentId={parentId}
+                  childId={selectedChildForLocation}
+                  childName={children.find(c => c.id === selectedChildForLocation)?.username || 'Child'}
+                />
+              </>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {children.length === 0 ? (
+                  <p className="text-gray-500">No children registered</p>
+                ) : (
+                  children.map((child) => (
+                    <div key={child.id} className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">
+                          📍
+                        </div>
+                        <div>
+                          <h3 className="font-bold">{child.username}</h3>
+                          <p className="text-gray-500 text-sm">{child.age} years old</p>
+                        </div>
+                      </div>
+                      
+                      {/* Quick Location Preview */}
+                      {child.location && (
+                        <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                          <p className="text-sm text-blue-800 font-mono">
+                            {child.location.lat.toFixed(4)}, {child.location.lng.toFixed(4)}
+                          </p>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Last seen: {new Date(child.location.timestamp).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={() => setSelectedChildForLocation(child.id)}
+                        className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"
+                      >
+                        📍 Track Location
                       </button>
                     </div>
                   ))

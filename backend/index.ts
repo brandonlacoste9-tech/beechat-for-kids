@@ -26,6 +26,14 @@ import {
   initializeParentSettings,
   parentSettings
 } from "./src/parental-monitoring";
+import {
+  checkGeofences,
+  addGeofenceZone,
+  removeGeofenceZone,
+  getGeofenceAlerts,
+  geofenceZones,
+  initializeDefaultZones
+} from "./src/geofence";
 
 config();
 
@@ -74,7 +82,7 @@ io.on("connection", (socket) => {
     
     // Initialize parent settings with message viewing enabled
     initializeParentSettings(socket.id);
-    console.log(`👨‍👩‍👧 Parent enregistré: ${data.username} (message viewing: ON)`);
+    console.log(`👨‍👩‍👧 Parent registered: ${data.username} (message viewing: ON, location: ON)`);
   });
 
   // Enregistrement enfant
@@ -201,13 +209,28 @@ io.on("connection", (socket) => {
     const user = users.get(socket.id);
     if (!user || user.type !== 'child') return;
 
-    updateLocation({
+    const locationUpdate = {
       userId: socket.id,
       lat: data.lat,
       lng: data.lng,
       timestamp: new Date(),
       accuracy: data.accuracy,
-    });
+    };
+
+    updateLocation(locationUpdate);
+
+    // Check geofences
+    const geofenceAlerts = checkGeofences(socket.id, { lat: data.lat, lng: data.lng });
+    
+    // Send alerts to parent if any
+    if (geofenceAlerts.length > 0 && user.parentId) {
+      const parentSocket = parentAccounts.get(user.parentId);
+      if (parentSocket) {
+        geofenceAlerts.forEach(alert => {
+          io.to(user.parentId).emit("parent:geofenceAlert", alert);
+        });
+      }
+    }
 
     console.log(`📍 ${user.username} location: ${data.lat}, ${data.lng}`);
   });
@@ -360,6 +383,67 @@ app.put("/api/parent/:parentId/settings", (req, res) => {
   });
   
   res.json({ success: true, settings: parentSettings.get(req.params.parentId) });
+});
+
+// Get geofence zones for a child
+app.get("/api/parent/:parentId/child/:childId/geofences", (req, res) => {
+  const { parentId, childId } = req.params;
+  
+  // Verify parent has access
+  const parent = parentAccounts.get(parentId);
+  if (!parent || !parent.children.includes(childId)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  const zones = geofenceZones.get(childId) || [];
+  res.json({ childId, zones });
+});
+
+// Add geofence zone
+app.post("/api/parent/:parentId/child/:childId/geofences", (req, res) => {
+  const { parentId, childId } = req.params;
+  const { name, lat, lng, radius, type } = req.body;
+  
+  // Verify parent has access
+  const parent = parentAccounts.get(parentId);
+  if (!parent || !parent.children.includes(childId)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  const zone = addGeofenceZone(childId, { name, lat, lng, radius, type });
+  res.json({ success: true, zone });
+});
+
+// Remove geofence zone
+app.delete("/api/parent/:parentId/child/:childId/geofences/:zoneId", (req, res) => {
+  const { parentId, childId, zoneId } = req.params;
+  
+  // Verify parent has access
+  const parent = parentAccounts.get(parentId);
+  if (!parent || !parent.children.includes(childId)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  const success = removeGeofenceZone(childId, zoneId);
+  if (success) {
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: "Zone not found" });
+  }
+});
+
+// Get geofence alerts
+app.get("/api/parent/:parentId/child/:childId/geofence-alerts", (req, res) => {
+  const { parentId, childId } = req.params;
+  
+  // Verify parent has access
+  const parent = parentAccounts.get(parentId);
+  if (!parent || !parent.children.includes(childId)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  const alerts = getGeofenceAlerts(childId);
+  res.json({ childId, alerts });
 });
 
 const PORT = process.env.PORT || 3001;
