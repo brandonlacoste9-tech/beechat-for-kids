@@ -1,6 +1,6 @@
-# 🐝 BEEChat
+# 🐝 BEEChat for Kids
 
-**Le messager sécurisé pour ados du Québec** - Une application de messagerie avec la culture québécoise intégrée!
+**Safe messaging app for kids with parental controls** - Une application de messagerie avec la culture québécoise intégrée!
 
 ## Fonctionnalités
 
