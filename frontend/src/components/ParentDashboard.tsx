@@ -73,49 +73,59 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-green-800 text-white p-4 shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5F0E6] via-[#E8DCC8] to-[#C9B8A4]">
+      {/* Header - Leather Style */}
+      <div className="header-leather text-[#FDF8F3] p-4 shadow-lg border-b-4 border-[#B8935F]">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">🐝</span>
+            <div className="w-12 h-12 bg-gradient-to-br from-[#E8B87D] to-[#D4A366] rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-[#FDF8F3]">
+              🐝
+            </div>
             <div>
-              <h1 className="text-xl font-bold">Tableau de bord parent</h1>
-              <p className="text-green-200 text-sm">BEEChat - Messagerie sécurisée</p>
+              <h1 className="text-xl font-bold">Parent Dashboard</h1>
+              <p className="text-[#FDF8F3]/80 text-sm">BEEChat - Safe Messaging</p>
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === 'overview' ? 'bg-green-600' : 'hover:bg-green-700'
+              className={`px-4 py-2 rounded-lg transition-all duration-200 stitched ${
+                activeTab === 'overview' 
+                  ? 'bg-gradient-to-br from-[#E8B87D] to-[#D4A366] text-[#5C4A3D]' 
+                  : 'bg-[#F5F0E6]/20 hover:bg-[#F5F0E6]/30 text-[#FDF8F3]'
               }`}
             >
-              👨‍👩‍👧 My Children
+              👨‍👩‍👧 Children
             </button>
             <button
               onClick={() => setActiveTab('messages')}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === 'messages' ? 'bg-blue-600' : 'hover:bg-green-700'
+              className={`px-4 py-2 rounded-lg transition-all duration-200 stitched ${
+                activeTab === 'messages' 
+                  ? 'bg-gradient-to-br from-[#D4C4D4] to-[#B8A4B8] text-[#5C4A3D]' 
+                  : 'bg-[#F5F0E6]/20 hover:bg-[#F5F0E6]/30 text-[#FDF8F3]'
               }`}
             >
-              💬 View Messages
+              💬 Messages
             </button>
             <button
               onClick={() => setActiveTab('location')}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === 'location' ? 'bg-purple-600' : 'hover:bg-green-700'
+              className={`px-4 py-2 rounded-lg transition-all duration-200 stitched ${
+                activeTab === 'location' 
+                  ? 'bg-gradient-to-br from-[#C9B8A4] to-[#A8957E] text-[#5C4A3D]' 
+                  : 'bg-[#F5F0E6]/20 hover:bg-[#F5F0E6]/30 text-[#FDF8F3]'
               }`}
             >
               📍 Location
             </button>
             <button
               onClick={() => setActiveTab('safety')}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === 'safety' ? 'bg-red-600' : 'hover:bg-green-700'
+              className={`px-4 py-2 rounded-lg transition-all duration-200 stitched ${
+                activeTab === 'safety' 
+                  ? 'bg-gradient-to-br from-[#E8B87D] to-[#D97A3E] text-[#FDF8F3]' 
+                  : 'bg-[#F5F0E6]/20 hover:bg-[#F5F0E6]/30 text-[#FDF8F3]'
               }`}
             >
-              🛡️ Safety Alerts
+              🛡️ Safety
             </button>
           </div>
         </div>
@@ -125,50 +135,57 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="grid gap-6">
-            <h2 className="text-2xl font-bold text-gray-800">Mes enfants</h2>
+            <h2 className="text-2xl font-bold text-[#5C4A3D]">My Children</h2>
             
             {children.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-md p-8 text-center">
+              <div className="leather-card stitched p-8 text-center">
                 <span className="text-6xl">👶</span>
-                <p className="mt-4 text-gray-600">Aucun enfant enregistré</p>
-                <p className="text-sm text-gray-400">
-                  Ajoutez un enfant depuis l'application mobile
+                <p className="mt-4 text-[#8B7355]">No children registered yet</p>
+                <p className="text-sm text-[#C9B8A4]">
+                  Add a child from the mobile app
                 </p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {children.map((child) => (
-                  <div key={child.id} className="bg-white rounded-xl shadow-md p-6">
+                  <div key={child.id} className="leather-card stitched p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#D4C4D4] to-[#B8A4B8] rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-[#FDF8F3]">
                           👤
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg">{child.username}</h3>
-                          <p className="text-gray-500 text-sm">{child.age} ans</p>
+                          <h3 className="font-bold text-lg text-[#5C4A3D]">{child.username}</h3>
+                          <p className="text-[#8B7355] text-sm">{child.age} years old</p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                        child.status === 'online' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {child.status === 'online' ? '🟢 En ligne' : '⚫ Hors ligne'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {child.status === 'online' ? (
+                          <span className="status-online" />
+                        ) : (
+                          <span className="status-offline" />
+                        )}
+                        <span className={`px-3 py-1 rounded-full text-sm ${
+                          child.status === 'online' 
+                            ? 'bg-gradient-to-r from-[#90EE90] to-[#4CAF50] text-white' 
+                            : 'bg-gradient-to-r from-[#C9B8A4] to-[#A8957E] text-[#5C4A3D]'
+                        }`}>
+                          {child.status === 'online' ? 'Online' : 'Offline'}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Location */}
+                    {/* Location Preview */}
                     {child.location && (
-                      <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-blue-800 flex items-center gap-2">
-                          📍 Position actuelle:
+                      <div className="ostrich-card rounded-lg p-3 mb-4 stitched-gold">
+                        <p className="text-sm text-[#5C4A3D] flex items-center gap-2">
+                          <span>📍</span>
                           <span className="font-mono">
                             {child.location.lat.toFixed(4)}, {child.location.lng.toFixed(4)}
                           </span>
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          Mis à jour: {new Date(child.location.timestamp).toLocaleString('fr-CA')}
+                        <p className="text-xs text-[#8B7355] mt-1">
+                          Updated: {new Date(child.location.timestamp).toLocaleString()}
                         </p>
                       </div>
                     )}
@@ -177,15 +194,15 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                     <div className="flex gap-2">
                       <button
                         onClick={() => refreshLocation(child.id)}
-                        className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                        className="flex-1 btn-cream text-sm"
                       >
-                        📍 Actualiser position
+                        📍 Refresh Location
                       </button>
                       <button
                         onClick={() => viewSafetyLogs(child.id)}
-                        className="flex-1 bg-red-100 text-red-700 py-2 rounded-lg hover:bg-red-200 transition"
+                        className="flex-1 btn-orange-leather text-sm"
                       >
-                        🛡️ Voir alertes
+                        🛡️ View Alerts
                       </button>
                     </div>
                   </div>
@@ -198,15 +215,13 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
         {/* Messages Tab */}
         {activeTab === 'messages' && (
           <div className="grid gap-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              💬 Message Viewer
-            </h2>
+            <h2 className="text-2xl font-bold text-[#5C4A3D]">Message Viewer</h2>
             
             {selectedChildForMessages ? (
               <>
                 <button
                   onClick={() => setSelectedChildForMessages(null)}
-                  className="text-blue-600 hover:underline text-left"
+                  className="text-[#D4A574] hover:text-[#B8935F] font-medium text-left flex items-center gap-2"
                 >
                   ← Back to children
                 </button>
@@ -219,22 +234,22 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {children.length === 0 ? (
-                  <p className="text-gray-500">No children registered</p>
+                  <p className="text-[#8B7355]">No children registered</p>
                 ) : (
                   children.map((child) => (
-                    <div key={child.id} className="bg-white rounded-xl shadow-md p-6">
+                    <div key={child.id} className="leather-card stitched p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#D4C4D4] to-[#B8A4B8] rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-[#FDF8F3]">
                           👤
                         </div>
                         <div>
-                          <h3 className="font-bold">{child.username}</h3>
-                          <p className="text-gray-500 text-sm">{child.age} years old</p>
+                          <h3 className="font-bold text-[#5C4A3D]">{child.username}</h3>
+                          <p className="text-[#8B7355] text-sm">{child.age} years old</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setSelectedChildForMessages(child.id)}
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                        className="w-full btn-purple-leather"
                       >
                         💬 View Messages
                       </button>
@@ -249,15 +264,13 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
         {/* Location Tab */}
         {activeTab === 'location' && (
           <div className="grid gap-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              📍 Location Tracker
-            </h2>
+            <h2 className="text-2xl font-bold text-[#5C4A3D]">Location Tracker</h2>
             
             {selectedChildForLocation ? (
               <>
                 <button
                   onClick={() => setSelectedChildForLocation(null)}
-                  className="text-blue-600 hover:underline text-left"
+                  className="text-[#D4A574] hover:text-[#B8935F] font-medium text-left flex items-center gap-2"
                 >
                   ← Back to children
                 </button>
@@ -271,27 +284,27 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {children.length === 0 ? (
-                  <p className="text-gray-500">No children registered</p>
+                  <p className="text-[#8B7355]">No children registered</p>
                 ) : (
                   children.map((child) => (
-                    <div key={child.id} className="bg-white rounded-xl shadow-md p-6">
+                    <div key={child.id} className="leather-card stitched p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#C9B8A4] to-[#A8957E] rounded-full flex items-center justify-center text-2xl shadow-md border-2 border-[#FDF8F3]">
                           📍
                         </div>
                         <div>
-                          <h3 className="font-bold">{child.username}</h3>
-                          <p className="text-gray-500 text-sm">{child.age} years old</p>
+                          <h3 className="font-bold text-[#5C4A3D]">{child.username}</h3>
+                          <p className="text-[#8B7355] text-sm">{child.age} years old</p>
                         </div>
                       </div>
                       
                       {/* Quick Location Preview */}
                       {child.location && (
-                        <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                          <p className="text-sm text-blue-800 font-mono">
+                        <div className="ostrich-card rounded-lg p-3 mb-4 stitched-gold">
+                          <p className="text-sm text-[#5C4A3D] font-mono">
                             {child.location.lat.toFixed(4)}, {child.location.lng.toFixed(4)}
                           </p>
-                          <p className="text-xs text-blue-600 mt-1">
+                          <p className="text-xs text-[#8B7355] mt-1">
                             Last seen: {new Date(child.location.timestamp).toLocaleTimeString()}
                           </p>
                         </div>
@@ -299,7 +312,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                       
                       <button
                         onClick={() => setSelectedChildForLocation(child.id)}
-                        className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition"
+                        className="w-full btn-leather"
                       >
                         📍 Track Location
                       </button>
@@ -315,54 +328,52 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
         {activeTab === 'safety' && (
           <div className="grid gap-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">
-                🛡️ Journal de sécurité
-              </h2>
+              <h2 className="text-2xl font-bold text-[#5C4A3D]">Safety Log</h2>
               {selectedChild && (
                 <button
                   onClick={() => setSelectedChild(null)}
-                  className="text-blue-600 hover:underline"
+                  className="text-[#D4A574] hover:text-[#B8935F] font-medium"
                 >
-                  Voir tous les enfants
+                  View all children
                 </button>
               )}
             </div>
 
             {safetyLogs.length === 0 ? (
-              <div className="bg-green-50 rounded-xl p-8 text-center">
+              <div className="leather-card stitched p-8 text-center">
                 <span className="text-6xl">✅</span>
-                <p className="mt-4 text-green-800 font-medium">
-                  Aucune alerte de sécurité!
+                <p className="mt-4 text-[#5C4A3D] font-medium">
+                  No safety alerts!
                 </p>
-                <p className="text-green-600 text-sm">
-                  Votre enfant utilise l'application de manière appropriée.
+                <p className="text-[#8B7355] text-sm">
+                  Your child is using the app appropriately.
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-xl shadow-md overflow-hidden">
+              <div className="leather-card stitched overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gradient-to-r from-[#E8DCC8] to-[#D4A574]">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Date</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Enfant</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Contenu</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Problème</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Gravité</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[#5C4A3D]">Date</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[#5C4A3D]">Child</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[#5C4A3D]">Content</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[#5C4A3D]">Issue</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-[#5C4A3D]">Severity</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[#C9B8A4]/30">
                     {safetyLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {new Date(log.timestamp).toLocaleString('fr-CA')}
+                      <tr key={log.id} className="hover:bg-[#E8DCC8]/30 transition-colors">
+                        <td className="px-4 py-3 text-sm text-[#8B7355]">
+                          {new Date(log.timestamp).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium">{log.childUsername}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                        <td className="px-4 py-3 text-sm font-medium text-[#5C4A3D]">{log.childUsername}</td>
+                        <td className="px-4 py-3 text-sm text-[#5C4A3D] max-w-xs truncate">
                           {log.content}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {log.flags.map((flag, i) => (
-                            <span key={i} className="inline-block bg-red-100 text-red-700 px-2 py-1 rounded text-xs mr-1">
+                            <span key={i} className="inline-block bg-gradient-to-r from-[#E8B87D] to-[#D97A3E] text-[#FDF8F3] px-2 py-1 rounded text-xs mr-1">
                               {flag}
                             </span>
                           ))}
@@ -370,10 +381,10 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             log.severity === 'high' 
-                              ? 'bg-red-100 text-red-700' 
-                              : 'bg-yellow-100 text-yellow-700'
+                              ? 'bg-gradient-to-r from-[#E8B87D] to-[#D97A3E] text-[#FDF8F3]' 
+                              : 'bg-gradient-to-r from-[#E8B87D] to-[#D4A366] text-[#5C4A3D]'
                           }`}>
-                            {log.severity === 'high' ? '🔴 Élevée' : '🟡 Moyenne'}
+                            {log.severity === 'high' ? '🔴 High' : '🟡 Medium'}
                           </span>
                         </td>
                       </tr>

@@ -1,39 +1,244 @@
+/* BEEChat - Luxury Leather Theme */
+/* Light tans, beige, ostrich, light purple, orange leathers */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  /* Leather Color Palette */
+  --leather-cream: #F5F0E6;
+  --leather-beige: #E8DCC8;
+  --leather-tan: #D4A574;
+  --leather-tan-dark: #B8935F;
+  --leather-ostrich: #C9B8A4;
+  --leather-ostrich-dark: #A8957E;
+  --leather-purple: #D4C4D4;
+  --leather-purple-dark: #B8A4B8;
+  --leather-orange: #E8B87D;
+  --leather-orange-dark: #D4A366;
+  --leather-brown: #8B7355;
+  --leather-dark: #5C4A3D;
+  --stitch-white: #FDF8F3;
+  --stitch-gold: #D4AF37;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+@layer base {
+  body {
+    @apply bg-[#F5F0E6] text-[#5C4A3D];
+    font-family: 'Georgia', 'Times New Roman', serif;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: #0f1419;
-}
+@layer components {
+  /* Embossed Leather Card Effect */
+  .leather-card {
+    @apply bg-gradient-to-br from-[#E8DCC8] to-[#D4A574] rounded-xl;
+    box-shadow: 
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      0 4px 6px -1px rgba(92, 74, 61, 0.2),
+      0 2px 4px -1px rgba(92, 74, 61, 0.1),
+      0 0 0 1px rgba(139, 115, 85, 0.1);
+    border: 1px solid rgba(139, 115, 85, 0.2);
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #1a472a;
-  border-radius: 3px;
-}
+  /* Ostrich Texture Card */
+  .ostrich-card {
+    @apply bg-[#C9B8A4] rounded-xl;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(92, 74, 61, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 40% 20%, rgba(255,255,255,0.15) 0%, transparent 40%);
+    box-shadow: 
+      0 4px 6px -1px rgba(92, 74, 61, 0.3),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #d4af37;
-}
+  /* Purple Leather Accent */
+  .purple-leather {
+    @apply bg-gradient-to-br from-[#D4C4D4] to-[#B8A4B8];
+    box-shadow: 
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      0 2px 4px rgba(92, 74, 61, 0.2);
+  }
 
-/* Animations */
-@keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
-}
+  /* Orange Leather Accent */
+  .orange-leather {
+    @apply bg-gradient-to-br from-[#E8B87D] to-[#D4A366];
+    box-shadow: 
+      inset 0 1px 0 rgba(255,255,255,0.4),
+      0 2px 4px rgba(92, 74, 61, 0.2);
+  }
 
-.animate-pulse-gold {
-  animation: pulse-gold 2s infinite;
+  /* Stitch Effect Border */
+  .stitched {
+    position: relative;
+  }
+  
+  .stitched::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 2px dashed rgba(253, 248, 243, 0.6);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Gold Stitch */
+  .stitched-gold::before {
+    border: 2px dashed rgba(212, 175, 55, 0.5);
+  }
+
+  /* Leather Button Styles */
+  .btn-leather {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    background: linear-gradient(145deg, #D4A574 0%, #B8935F 100%);
+    color: #FDF8F3;
+    text-shadow: 0 1px 2px rgba(92, 74, 61, 0.3);
+    box-shadow: 
+      0 4px 6px -1px rgba(92, 74, 61, 0.3),
+      0 2px 4px -1px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 1px solid rgba(139, 115, 85, 0.3);
+  }
+
+  .btn-leather:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 6px 8px -1px rgba(92, 74, 61, 0.3),
+      0 4px 6px -1px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  .btn-leather:active {
+    transform: translateY(0);
+    box-shadow: 
+      0 2px 4px -1px rgba(92, 74, 61, 0.3),
+      inset 0 2px 4px rgba(92, 74, 61, 0.2);
+  }
+
+  /* Purple Leather Button */
+  .btn-purple-leather {
+    background: linear-gradient(145deg, #D4C4D4 0%, #B8A4B8 100%);
+    color: #5C4A3D;
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    box-shadow: 
+      0 4px 6px -1px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    border: 1px solid rgba(139, 115, 85, 0.2);
+  }
+
+  /* Orange Leather Button */
+  .btn-orange-leather {
+    background: linear-gradient(145deg, #E8B87D 0%, #D4A366 100%);
+    color: #5C4A3D;
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    box-shadow: 
+      0 4px 6px -1px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.4);
+    border: 1px solid rgba(139, 115, 85, 0.2);
+  }
+
+  /* Cream/Beige Button */
+  .btn-cream {
+    background: linear-gradient(145deg, #F5F0E6 0%, #E8DCC8 100%);
+    color: #5C4A3D;
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200;
+    box-shadow: 
+      0 2px 4px -1px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 1px solid rgba(139, 115, 85, 0.2);
+  }
+
+  /* Header Leather Effect */
+  .header-leather {
+    background: linear-gradient(145deg, #D4A574 0%, #B8935F 50%, #C9B8A4 100%);
+    box-shadow: 
+      0 4px 6px -1px rgba(92, 74, 61, 0.3),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    border-bottom: 2px solid rgba(139, 115, 85, 0.3);
+  }
+
+  /* Input Field Leather Style */
+  .input-leather {
+    @apply w-full px-4 py-3 rounded-lg;
+    background: linear-gradient(145deg, #FDF8F3 0%, #F5F0E6 100%);
+    border: 2px solid rgba(139, 115, 85, 0.2);
+    color: #5C4A3D;
+    box-shadow: 
+      inset 0 2px 4px rgba(92, 74, 61, 0.05),
+      0 1px 0 rgba(255,255,255,0.8);
+  }
+
+  .input-leather:focus {
+    outline: none;
+    border-color: #D4A574;
+    box-shadow: 
+      inset 0 2px 4px rgba(92, 74, 61, 0.05),
+      0 0 0 3px rgba(212, 165, 116, 0.2);
+  }
+
+  /* Message Bubble - Sent (Orange Leather) */
+  .message-sent {
+    background: linear-gradient(145deg, #E8B87D 0%, #D4A366 100%);
+    color: #5C4A3D;
+    border-radius: 18px 18px 4px 18px;
+    box-shadow: 
+      0 2px 4px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* Message Bubble - Received (Purple Leather) */
+  .message-received {
+    background: linear-gradient(145deg, #D4C4D4 0%, #B8A4B8 100%);
+    color: #5C4A3D;
+    border-radius: 18px 18px 18px 4px;
+    box-shadow: 
+      0 2px 4px rgba(92, 74, 61, 0.2),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+
+  /* Safety Alert Badge */
+  .badge-alert {
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+    background: linear-gradient(145deg, #E8B87D 0%, #D97A3E 100%);
+    color: #FDF8F3;
+    box-shadow: 0 2px 4px rgba(92, 74, 61, 0.2);
+  }
+
+  /* Online Status Indicator */
+  .status-online {
+    @apply w-3 h-3 rounded-full;
+    background: linear-gradient(145deg, #90EE90 0%, #4CAF50 100%);
+    box-shadow: 0 0 0 2px #F5F0E6, 0 0 0 4px rgba(76, 175, 80, 0.3);
+  }
+
+  .status-offline {
+    @apply w-3 h-3 rounded-full;
+    background: linear-gradient(145deg, #C9B8A4 0%, #A8957E 100%);
+    box-shadow: 0 0 0 2px #F5F0E6;
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #E8DCC8;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(145deg, #D4A574 0%, #B8935F 100%);
+    border-radius: 4px;
+    border: 2px solid #E8DCC8;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(145deg, #B8935F 0%, #8B7355 100%);
+  }
 }

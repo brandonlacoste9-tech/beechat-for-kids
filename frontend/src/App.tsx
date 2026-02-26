@@ -83,26 +83,35 @@ function App() {
     );
   }
 
-  // Landing / Registration
+  // Landing / Registration - Leather Theme
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-700 to-green-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5F0E6] via-[#E8DCC8] to-[#C9B8A4] flex items-center justify-center p-4">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%235C4A3D' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}
+      />
+      
+      <div className="leather-card stitched relative max-w-md w-full p-8 z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <span className="text-6xl">🐝</span>
-          <h1 className="text-3xl font-bold text-green-800 mt-4">BEEChat</h1>
-          <p className="text-gray-600 mt-2">
-            La messagerie sécurisée pour ados du Québec
+          <div className="w-20 h-20 mx-auto bg-gradient-to-br from-[#E8B87D] to-[#D4A366] rounded-full flex items-center justify-center text-4xl shadow-lg border-4 border-[#F5F0E6]">
+            🐝
+          </div>
+          <h1 className="text-3xl font-bold text-[#5C4A3D] mt-4">BEEChat</h1>
+          <p className="text-[#8B7355] mt-2">
+            Safe messaging for kids
           </p>
-          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-green-700">
+          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-[#B8935F]">
             <span>🔒</span>
-            <span>Approuvé par les parents</span>
+            <span>Parent-approved</span>
           </div>
         </div>
 
         {!isConnected && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg p-3 mb-4 text-center">
-            ⏳ Connexion au serveur...
+          <div className="bg-[#E8B87D]/20 border border-[#D4A366] text-[#8B7355] rounded-lg p-3 mb-4 text-center">
+            ⏳ Connecting to server...
           </div>
         )}
 
@@ -110,40 +119,40 @@ function App() {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <button
             onClick={() => setUserType('none')}
-            className={`p-4 rounded-xl border-2 transition ${
+            className={`p-4 rounded-xl border-2 transition-all duration-200 stitched ${
               userType === 'none' 
-                ? 'border-green-600 bg-green-50' 
-                : 'border-gray-200 hover:border-green-300'
+                ? 'border-[#D4A574] bg-gradient-to-br from-[#E8B87D]/30 to-[#D4A366]/30' 
+                : 'border-[#C9B8A4] hover:border-[#D4A574] bg-[#F5F0E6]/50'
             }`}
           >
             <span className="text-2xl">👨‍👩‍👧</span>
-            <p className="font-medium mt-2">Je suis un parent</p>
+            <p className="font-medium mt-2 text-[#5C4A3D]">I'm a Parent</p>
           </button>
           <button
             onClick={() => setUserType('none')}
-            className={`p-4 rounded-xl border-2 transition ${
+            className={`p-4 rounded-xl border-2 transition-all duration-200 stitched ${
               userType === 'none' 
-                ? 'border-green-600 bg-green-50' 
-                : 'border-gray-200 hover:border-green-300'
+                ? 'border-[#D4C4D4] bg-gradient-to-br from-[#D4C4D4]/30 to-[#B8A4B8]/30' 
+                : 'border-[#C9B8A4] hover:border-[#D4C4D4] bg-[#F5F0E6]/50'
             }`}
           >
             <span className="text-2xl">👦👧</span>
-            <p className="font-medium mt-2">Je suis un ado</p>
+            <p className="font-medium mt-2 text-[#5C4A3D]">I'm a Kid</p>
           </button>
         </div>
 
         {/* Registration Form */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom d'utilisateur
+            <label className="block text-sm font-medium text-[#5C4A3D] mb-1">
+              Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ton pseudo"
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              placeholder="Your username"
+              className="input-leather"
             />
           </div>
 
@@ -151,8 +160,8 @@ function App() {
           {(
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Âge
+                <label className="block text-sm font-medium text-[#5C4A3D] mb-1">
+                  Age
                 </label>
                 <input
                   type="number"
@@ -161,27 +170,27 @@ function App() {
                   placeholder="11-16"
                   min={11}
                   max={16}
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  className="input-leather"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ID Parent (demande à tes parents)
+                <label className="block text-sm font-medium text-[#5C4A3D] mb-1">
+                  Parent ID (ask your parents)
                 </label>
                 <input
                   type="text"
                   value={parentId}
                   onChange={(e) => setParentId(e.target.value)}
-                  placeholder="ex: parent_123"
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                  placeholder="e.g., parent_123"
+                  className="input-leather"
                 />
               </div>
               <button
                 onClick={registerChild}
                 disabled={!username || !age || !parentId || !isConnected}
-                className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="w-full btn-orange-leather disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                🚀 Commencer à chatter!
+                🚀 Start Chatting!
               </button>
             </>
           ) }
@@ -191,26 +200,29 @@ function App() {
             <button
               onClick={registerParent}
               disabled={!username || !isConnected}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full btn-purple-leather disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              👨‍👩‍👧 Créer un compte parent
+              👨‍👩‍👧 Create Parent Account
             </button>
           )}
         </div>
 
         {/* Safety Info */}
-        <div className="mt-6 bg-green-50 rounded-lg p-4 text-sm text-green-800">
-          <p className="flex items-center gap-2 font-medium">
+        <div className="mt-6 ostrich-card stitched p-4 text-sm text-[#5C4A3D]">
+          <p className="flex items-center gap-2 font-medium mb-2">
             <span>🛡️</span>
-            Sécurité avant tout!
+            Safety First!
           </p>
-          <ul className="mt-2 space-y-1 text-green-700">
-            <li>• Les parents approuvent les contacts</li>
-            <li>• Filtrage de langage automatique</li>
-            <li>• Historique des messages visible par les parents</li>
-            <li>• Géolocalisation partagée</li>
+          <ul className="space-y-1 text-[#8B7355]">
+            <li>• Parents approve all contacts</li>
+            <li>• Automatic language filtering</li>
+            <li>• Message history visible to parents</li>
+            <li>• GPS location sharing</li>
           </ul>
         </div>
+
+        {/* Decorative Stitching */}
+        <div className="absolute -bottom-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-[#D4A574] to-transparent opacity-50" />
       </div>
     </div>
   );
