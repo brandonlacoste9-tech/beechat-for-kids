@@ -22,7 +22,7 @@ import {
   initializeDefaultZones
 } from "./src/geofence";
 import {
-  supabase,
+  initDatabase,
   createUser,
   getUserById,
   getChildrenByParent,
@@ -38,6 +38,7 @@ import {
   getApprovedContacts,
   isContactApproved,
   checkDatabaseHealth,
+  updateUserStatus,
   User
 } from "./src/db";
 
@@ -353,7 +354,7 @@ io.on("connection", (socket) => {
       socketToUser.delete(socket.id);
       
       // Update status in DB
-      await supabase.from('users').update({ status: 'offline' }).eq('id', userId);
+      await updateUserStatus(userId, 'offline');
       
       console.log(`👋 User disconnected: ${userId}`);
     }
@@ -454,9 +455,12 @@ app.get("/api/parent/:parentId/child/:childId/geofence-alerts", async (req, res)
   res.json({ childId, alerts });
 });
 
+// Initialize database on startup
+initDatabase();
+
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`🐝 BEEChat server running on port ${PORT}`);
   console.log(`🔒 Safe messaging for kids with parental controls`);
-  console.log(`💾 Connected to Supabase PostgreSQL`);
+  console.log(`💾 Powered by Neon Serverless PostgreSQL`);
 });

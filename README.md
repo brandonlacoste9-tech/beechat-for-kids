@@ -3,7 +3,7 @@
 **Safe messaging app for kids with parental controls**
 
 [![Deploy on Render](https://img.shields.io/badge/Deploy-Render-green)](https://render.com)
-[![Database](https://img.shields.io/badge/Database-Supabase-blue)](https://supabase.com)
+[![Database](https://img.shields.io/badge/Database-Neon-blue)](https://neon.tech)
 
 ## Features
 
@@ -20,7 +20,7 @@
 |-------|------------|
 | Frontend | React + Vite + Tailwind CSS |
 | Backend | Node.js + Express + Socket.io |
-| Database | Supabase PostgreSQL |
+| Database | Neon Serverless PostgreSQL |
 | Real-time | WebSockets |
 | Hosting | Render |
 
@@ -38,21 +38,19 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-### 2. Set up Supabase Database
+### 2. Set up Neon Database
 
-1. Create a free account at [supabase.com](https://supabase.com)
+1. Create free account at [neon.tech](https://neon.tech)
 2. Create a new project
-3. Go to SQL Editor → New query
-4. Copy/paste `supabase-schema.sql` and run it
-5. Go to Settings → API → Copy:
-   - `Project URL` → `SUPABASE_URL`
-   - `service_role secret` → `SUPABASE_SERVICE_KEY`
+3. Copy the connection string from Dashboard
+4. It looks like: `postgresql://user:password@ep-xxx.neon.tech/beechat?sslmode=require`
 
 ### 3. Environment Variables
 
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase credentials
+# Edit .env:
+DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/beechat?sslmode=require
 ```
 
 ### 4. Run Locally
@@ -71,33 +69,42 @@ Visit `http://localhost:5173`
 
 ## Deploy to Render
 
-### Option 1: Blueprint (Recommended)
+### Step 1: Create Neon Database
 
-1. Push your code to GitHub
-2. Go to [Render Dashboard](https://dashboard.render.com)
-3. Click "New" → "Blueprint"
-4. Connect your GitHub repo
-5. Add environment variables in Render dashboard:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
+1. Go to [neon.tech](https://neon.tech) → New Project
+2. Copy the connection string
+3. Keep it for Render setup
+
+### Step 2: Deploy Backend
+
+1. Go to [Render Dashboard](https://dashboard.render.com)
+2. New → Web Service
+3. Connect your GitHub repo
+4. Settings:
+   - **Name**: beechat-api
+   - **Root Directory**: backend
+   - **Build Command**: `npm install`
+   - **Start Command**: `npx tsx index.ts`
+5. Add Environment Variable:
+   - `DATABASE_URL` = your Neon connection string
 6. Deploy!
 
-### Option 2: Manual
+### Step 3: Deploy Frontend
 
-**Backend:**
-- New → Web Service
-- Connect repo, select `backend` folder
-- Build: `npm install`
-- Start: `npx tsx index.ts`
-- Add env vars
-
-**Frontend:**
-- New → Static Site
-- Connect repo, select `frontend` folder
-- Build: `npm install && npm run build`
-- Publish: `dist`
+1. New → Static Site
+2. Connect same repo
+3. Settings:
+   - **Name**: beechat-app
+   - **Root Directory**: frontend
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. Add Environment Variable:
+   - `VITE_API_URL` = your backend URL (e.g., `https://beechat-api.onrender.com`)
+5. Deploy!
 
 ## Database Schema
+
+Neon automatically creates tables on first run via `initDatabase()`.
 
 ```sql
 users (id, username, email, type, parent_id, age, status)
@@ -105,28 +112,17 @@ messages (id, sender_id, recipient_id, content, type, safety_flags)
 locations (id, user_id, lat, lng, accuracy)
 safety_logs (id, child_id, content, flags, severity)
 contacts (id, child_id, contact_name, approved, approved_by)
-geofence_zones (id, child_id, name, lat, lng, radius, type)
-geofence_alerts (id, child_id, zone_id, alert_type)
 ```
 
-## Safety Features
+## Why Neon + Render?
 
-### Content Filtering
-- Automatic detection of swear words (English + French)
-- Phone number/email detection
-- 3-tier system: Allow / Warn / Block
-- Parent notifications for violations
-
-### Contact Approval
-- Child requests to add friend
-- Parent approves/denies from dashboard
-- Child can only message approved contacts
-
-### Location Tracking
-- Real-time GPS updates
-- 24-hour location history
-- Geofencing with enter/exit alerts
-- Home/School zone support
+| Feature | Benefit |
+|---------|---------|
+| **Serverless Postgres** | Scales to zero, pay only for usage |
+| **Connection pooling** | Built-in PgBouncer (no connection limits) |
+| **Branching** | Create DB branches for dev/staging |
+| **Free tier** | 500 MB storage, 190 compute hours/month |
+| **Render integration** | Same data center = fast queries |
 
 ## API Endpoints
 
@@ -156,6 +152,15 @@ GET  /api/parent/:id/child/:id/geofence-alerts  # Get alerts
 - `parent:safetyLogs` - Safety alerts
 - `parent:geofenceAlert` - Geofence breach
 
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | Neon PostgreSQL connection string | Yes |
+| `PORT` | Server port (default: 3001) | No |
+| `NODE_ENV` | development / production | No |
+| `VITE_API_URL` | Backend URL for frontend | For deploy |
+
 ## Development
 
 ```bash
@@ -171,13 +176,20 @@ git commit -m "Your changes"
 git push origin master
 ```
 
-## Security
+## Troubleshooting
 
-- All messages stored in PostgreSQL with RLS
-- Parents can only access their children's data
-- Location data encrypted at rest
-- Socket authentication required
-- No passwords stored for children (parent-code login)
+### Database Connection Issues
+```bash
+# Test Neon connection
+psql $DATABASE_URL -c "SELECT 1"
+
+# Check SSL mode is enabled (required for Neon)
+```
+
+### Render Deployment Issues
+- Make sure `DATABASE_URL` is set in Render Environment Variables
+- Ensure `sslmode=require` is in the connection string
+- Check Render logs for connection errors
 
 ## License
 

@@ -1,4 +1,6 @@
 # 🚀 BEEChat Render Deployment Configuration
+# Neon PostgreSQL + Render = Perfect match!
+
 services:
   # Backend API
   - type: web
@@ -13,12 +15,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
       - key: PORT
         value: 10000
+      - key: DATABASE_URL
+        sync: false  # Set this in Render dashboard with your Neon URL
+    healthCheckPath: /api/health
 
   # Frontend (static site)
   - type: static
@@ -30,6 +31,9 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://beechat-api.onrender.com  # Update with your API URL
     routes:
       - type: rewrite
         source: /*
