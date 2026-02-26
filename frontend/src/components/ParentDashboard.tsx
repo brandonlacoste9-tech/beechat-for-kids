@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
+import { MessageViewer } from './MessageViewer';
 
 interface Child {
   id: string;
@@ -34,7 +35,8 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [safetyLogs, setSafetyLogs] = useState<SafetyLog[]>([]);
   const [locationHistory, setLocationHistory] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'location'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'location' | 'messages'>('overview');
+  const [selectedChildForMessages, setSelectedChildForMessages] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch children on mount
@@ -87,7 +89,15 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                 activeTab === 'overview' ? 'bg-green-600' : 'hover:bg-green-700'
               }`}
             >
-              👨‍👩‍👧 Mes enfants
+              👨‍👩‍👧 My Children
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`px-4 py-2 rounded-lg transition ${
+                activeTab === 'messages' ? 'bg-blue-600' : 'hover:bg-green-700'
+              }`}
+            >
+              💬 View Messages
             </button>
             <button
               onClick={() => setActiveTab('safety')}
@@ -95,7 +105,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                 activeTab === 'safety' ? 'bg-red-600' : 'hover:bg-green-700'
               }`}
             >
-              🛡️ Alertes sécurité
+              🛡️ Safety Alerts
             </button>
           </div>
         </div>
@@ -170,6 +180,57 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Messages Tab */}
+        {activeTab === 'messages' && (
+          <div className="grid gap-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              💬 Message Viewer
+            </h2>
+            
+            {selectedChildForMessages ? (
+              <>
+                <button
+                  onClick={() => setSelectedChildForMessages(null)}
+                  className="text-blue-600 hover:underline text-left"
+                >
+                  ← Back to children
+                </button>
+                <MessageViewer
+                  parentId={parentId}
+                  childId={selectedChildForMessages}
+                  childName={children.find(c => c.id === selectedChildForMessages)?.username || 'Child'}
+                />
+              </>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {children.length === 0 ? (
+                  <p className="text-gray-500">No children registered</p>
+                ) : (
+                  children.map((child) => (
+                    <div key={child.id} className="bg-white rounded-xl shadow-md p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">
+                          👤
+                        </div>
+                        <div>
+                          <h3 className="font-bold">{child.username}</h3>
+                          <p className="text-gray-500 text-sm">{child.age} years old</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedChildForMessages(child.id)}
+                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                      >
+                        💬 View Messages
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

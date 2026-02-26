@@ -19,6 +19,13 @@ import {
   safetyLogs,
   locationHistory
 } from "./src/safety";
+import {
+  storeMessageForParent,
+  getChildMessages,
+  getConversationSummary,
+  initializeParentSettings,
+  parentSettings
+} from "./src/parental-monitoring";
 
 config();
 
@@ -64,7 +71,10 @@ io.on("connection", (socket) => {
     };
     parentAccounts.set(socket.id, parent);
     users.set(socket.id, parent);
-    console.log(`👨‍👩‍👧 Parent enregistré: ${data.username}`);
+    
+    // Initialize parent settings with message viewing enabled
+    initializeParentSettings(socket.id);
+    console.log(`👨‍👩‍👧 Parent enregistré: ${data.username} (message viewing: ON)`);
   });
 
   // Enregistrement enfant
@@ -158,6 +168,18 @@ io.on("connection", (socket) => {
     messages.set(message.id, message);
     io.to(data.recipientId).emit("message:received", message);
     socket.emit("message:sent", message);
+
+    // Store for parent review
+    storeMessageForParent({
+      id: message.id,
+      childId: socket.id,
+      content: data.content,
+      sender: sender.username,
+      recipient: data.recipientId,
+      timestamp: new Date(),
+      type: 'sent',
+      safetyFlags: safetyCheck.flags
+    });
 
     // Log si flags détectés
     if (!safetyCheck.clean && sender.type === 'child') {
@@ -272,6 +294,72 @@ app.get("/api/parent/:parentId/children", (req, res) => {
   }));
   
   res.json(children);
+});
+
+// Get child's messages (parent viewing)
+app.get("/api/parent/:parentId/child/:childId/messages", (req, res) => {
+  const { parentId, childId } = req.params;
+  const { limit, search } = req.query;
+  
+  const messages = getChildMessages(parentId, childId, {
+    limit: limit ? parseInt(limit as string) : 50,
+    searchQuery: search as string
+  });
+  
+  if (messages === null) {
+    return res.status(403).json({ error: "Access denied or viewing disabled" });
+  }
+  
+  res.json({
+    childId,
+    messageCount: messages.length,
+    messages
+  });
+});
+
+// Get conversation summary (who child talks to most)
+app.get("/api/parent/:parentId/child/:childId/contacts", (req, res) => {
+  const { parentId, childId } = req.params;
+  
+  const summary = getConversationSummary(parentId, childId);
+  if (summary === null) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  
+  res.json({
+    childId,
+    contacts: summary
+  });
+});
+
+// Get parent settings
+app.get("/api/parent/:parentId/settings", (req, res) => {
+  const settings = parentSettings.get(req.params.parentId);
+  if (!settings) {
+    return res.status(404).json({ error: "Settings not found" });
+  }
+  
+  res.json(settings);
+});
+
+// Update parent settings (toggle message viewing)
+app.put("/api/parent/:parentId/settings", (req, res) => {
+  const { viewMessages, viewMetadataOnly, realTimeAlerts, locationTracking } = req.body;
+  
+  const current = parentSettings.get(req.params.parentId);
+  if (!current) {
+    return res.status(404).json({ error: "Settings not found" });
+  }
+  
+  parentSettings.set(req.params.parentId, {
+    ...current,
+    viewMessages: viewMessages ?? current.viewMessages,
+    viewMetadataOnly: viewMetadataOnly ?? current.viewMetadataOnly,
+    realTimeAlerts: realTimeAlerts ?? current.realTimeAlerts,
+    locationTracking: locationTracking ?? current.locationTracking
+  });
+  
+  res.json({ success: true, settings: parentSettings.get(req.params.parentId) });
 });
 
 const PORT = process.env.PORT || 3001;
