@@ -4,11 +4,11 @@
  * PostgreSQL + Supabase
  */
 
+import "./loadEnv.js";
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import { config } from "dotenv";
 import { v4 as uuidv4 } from "uuid";
 import { 
   checkMessage
@@ -41,8 +41,6 @@ import {
   updateUserStatus,
   User
 } from "./src/db";
-
-config();
 
 const app = express();
 const httpServer = createServer(app);
