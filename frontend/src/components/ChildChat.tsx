@@ -17,7 +17,7 @@ interface ChildChatProps {
   parentId: string;
 }
 
-export const ChildChat: React.FC<ChildChatProps> = ({ socket, childId, username, parentId }) => {
+export const ChildChat: React.FC<ChildChatProps> = ({ socket, childId, username }: ChildChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [beeMessage, setBeeMessage] = useState<string | null>(null);
@@ -163,7 +163,7 @@ export const ChildChat: React.FC<ChildChatProps> = ({ socket, childId, username,
             </div>
           )}
 
-          {messages.map((msg, index) => {
+          {messages.map((msg) => {
             const isMe = msg.senderId === childId;
             return (
               <div

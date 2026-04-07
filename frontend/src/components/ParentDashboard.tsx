@@ -35,7 +35,6 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
   const [safetyLogs, setSafetyLogs] = useState<SafetyLog[]>([]);
-  const [locationHistory, setLocationHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'safety' | 'location' | 'messages'>('overview');
   const [selectedChildForMessages, setSelectedChildForMessages] = useState<string | null>(null);
   const [selectedChildForLocation, setSelectedChildForLocation] = useState<string | null>(null);
@@ -45,11 +44,6 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ socket, parent
     fetch(`/api/parent/${parentId}/children`)
       .then(res => res.json())
       .then(data => setChildren(data));
-
-    // Listen for location updates
-    socket.on('parent:locationData', (data) => {
-      setLocationHistory(data.history);
-    });
 
     // Listen for safety logs
     socket.on('parent:safetyLogs', (data) => {

@@ -17,10 +17,9 @@ interface LocationTrackerProps {
 
 export const LocationTracker: React.FC<LocationTrackerProps> = ({ 
   socket, 
-  parentId, 
   childId, 
-  childName 
-}) => {
+  childName,
+}: LocationTrackerProps) => {
   const [currentLocation, setCurrentLocation] = useState<LocationUpdate | null>(null);
   const [locationHistory, setLocationHistory] = useState<LocationUpdate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +41,14 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({
     });
 
     // Auto refresh every 30 seconds if enabled
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (autoRefresh) {
       interval = setInterval(refreshLocation, 30000);
     }
 
     return () => {
       socket.off('parent:locationData');
-      if (interval) clearInterval(interval);
+      if (interval !== undefined) clearInterval(interval);
     };
   }, [socket, childId, autoRefresh]);
 
